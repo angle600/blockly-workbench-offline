@@ -20,3 +20,5 @@ upload.log
 Thumbs.db
 desktop.ini
 .DS_Store
+# 微云 MCP 凭据（含 token，绝不入 git）
+工具/_weiyun_auth.json
