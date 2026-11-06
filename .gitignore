@@ -1,0 +1,22 @@
+# 运行日志（含临时凭据片段与本地 MCP 会话地址，不入库）
+upload.log
+*.log
+
+# 微云上传进度缓存
+工具/_uploaded.txt
+工具/_pyshim/__pycache__/
+**/__pycache__/
+
+# 解压后的实目录（由 install.ps1 从 volumes\*.rar 还原，不入库）
+/arduino15/
+/ide/
+/runtime/
+/libraries/
+/library-zips/
+/npm/
+/payload/
+
+# Windows 垃圾文件
+Thumbs.db
+desktop.ini
+.DS_Store

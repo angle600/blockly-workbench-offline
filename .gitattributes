@@ -1,0 +1,14 @@
+* text=auto
+
+# 分卷压缩包：二进制，禁止行尾转换与任何文本处理
+*.rar binary
+*.zip binary
+*.7z binary
+*.bin binary
+*.exe binary
+
+# 脚本与文档保持 CRLF（Windows 安装包）
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
+*.md  text eol=crlf
+*.json text eol=crlf
