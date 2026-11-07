@@ -27,6 +27,7 @@
 - **积木即代码** —— 右侧代码区实时生成 C++，每一块积木对应的实现都看得见
 - **真的能烧** —— 顶栏「编译并烧录」直接调本地 `arduino-cli`，不用另开 Arduino IDE
 - **引脚不会错** —— 35 块电子积木的引脚下拉跟着板型变，Uno 上不出现 `GP15`，S3 上不出现 `GP22`
+- **同一组积木，按板型换实现** —— 比如 WS2812 灯带：Uno 关中断自己数周期、Pico W 走 PIO、ESP32-S3 走 RMT；APA102 灯带则是两根线：Uno 软件 SPI（端口直写）、Pico W / ESP32-S3 硬件 SPI 8MHz。生成的注释、上限和编译期提醒都是各板各算
 - **同一份积木，两种语言** —— 切到 Python 视图就是等价的 MicroPython，能直接刷进 Pico W / ESP32-S3
 - **完全离线** —— 装完拔网线也能用，编译、烧录、串口监视全部本地完成
 
@@ -43,9 +44,9 @@
 | ESP32-S3 · USB | Xtensa LX7 + 硬件 CDC | 33 | A0~A9（ADC1） | 33 | — |
 
 随包预装三套板卡核心：`arduino:avr 1.8.8`、`esp32 3.3.12`、`rp2040 6.3.1`（共 80,900 个文件），
-以及 Servo、ESP32Servo、SerialLCD、EspSoftwareSerial、ghostl、PubSubClient 六个外置库。
+以及 Servo、ESP32Servo、SerialLCD、EspSoftwareSerial、ghostl、PubSubClient、Adafruit NeoPixel（WS2812 灯带）七个外置库。
 
-完整位号表（35 块积木 × 5 种板型，每块给几项、默认落在哪个脚）见 **[积木清单.md](积木清单.md)**。
+完整位号表（带位号下拉的电子积木 × 5 种板型，每块给几项、默认落在哪个脚）见 **[积木清单.md](积木清单.md)**。
 
 > 引脚下拉是**按板型静态生成**的，所以工具会提前挡掉几类必然踩的坑：Uno 的 PWM 只给 6 个脚、
 > Uno 的外部中断只给 2/3、ESP32-S3 的 GP22~GP37（芯片上不存在或归 Flash/PSRAM）不出现。

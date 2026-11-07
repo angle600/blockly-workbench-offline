@@ -59,7 +59,7 @@ $ProgressPreference    = 'SilentlyContinue'
 
 $PkgRoot  = $PSScriptRoot
 $PkgName  = 'Blockly 可视化编程工作台 离线安装包'
-$PkgVer   = '1.3.0'
+$PkgVer   = '1.5.0'
 
 function Line   { param([string]$m = '') Write-Host $m }
 function Step   { param([string]$m) Write-Host (("`n" + '[*] ' + $m)) -ForegroundColor Cyan }
@@ -411,6 +411,14 @@ if ($Capture) {
     $cliVer  = if (Test-Path $cliExePath) { (& $cliExePath version 2>$null) }
                elseif ($oldMf) { $oldMf.cli } else { '' }
 
+    # 外置库清单的数据源：优先 pkg\libraries（安装时用的那份）；它被压进
+    # volumes\libraries.*.rar 时改看 payload\arduino-user\libraries —— capture 刚
+    # 重建过 payload，那边是展开的，能读到最新内容（含这次新加的库）。
+    $libDirForManifest = Join-Path $PkgRoot 'libraries'
+    if (-not (Test-Path $libDirForManifest)) {
+        $libDirForManifest = Join-Path $PkgRoot 'payload\arduino-user\libraries'
+    }
+
     $manifest = [ordered]@{
         name        = $PkgName
         version     = $PkgVer
@@ -420,7 +428,7 @@ if ($Capture) {
         cli         = $cliVer
         payload     = (& $statOf 'payload' 'payload')
         cores       = (& $statOf 'arduino15' 'cores')
-        libraries   = @(Get-ChildItem (Join-Path $PkgRoot 'libraries') -Directory -ErrorAction SilentlyContinue | ForEach-Object {
+        libraries   = @(Get-ChildItem $libDirForManifest -Directory -ErrorAction SilentlyContinue | ForEach-Object {
             $lp  = Join-Path $_.FullName 'library.properties'
             $ver = ''
             if (Test-Path $lp) {

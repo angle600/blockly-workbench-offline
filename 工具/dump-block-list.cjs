@@ -68,13 +68,17 @@ const BOARDS = [
 
 // 枚举带 PIN 字段的电子积木（和 verify-pins.cjs 同一个口径）
 const types = [];
+// 双线积木（APA102 的 CLK + DATA）：一块积木两个脚，单独成表
+const dualTypes = [];
 const probe = new B.Workspace();
 Object.keys(B.Blocks).sort().forEach((t) => {
   if (!/^(inout_|servo_|grove_|irq_)/.test(t)) return;
   let b;
   try { b = probe.newBlock(t); } catch (e) { return; }
   const f = b.getField && b.getField('PIN');
+  const hasDual = b.getField && b.getField('CLK') && b.getField('DATA');
   if (f) types.push(t);
+  else if (hasDual) dualTypes.push(t);
   b.dispose();
 });
 probe.dispose();
@@ -89,6 +93,26 @@ const rows = types.map((t) => {
       const f = b.getField('PIN');
       const n = (f.getOptions(true) || []).length;
       cell = n + ' 项 / 默认 ' + String(f.getValue());
+    } catch (e) {
+      cell = '【报错】';
+    }
+    ws.dispose();
+    return cell;
+  });
+  return '| `' + t + '` | ' + cells.join(' | ') + ' |';
+});
+
+const dualRows = dualTypes.map((t) => {
+  const cells = BOARDS.map(([k]) => {
+    P.setBoard(k);
+    const ws = new B.Workspace();
+    let cell = '—';
+    try {
+      const b = ws.newBlock(t);
+      const clk = b.getField('CLK');
+      const data = b.getField('DATA');
+      cell = 'CLK ' + (clk.getOptions(true) || []).length + ' / DATA ' +
+        (data.getOptions(true) || []).length + ' · 默认 ' + clk.getValue() + ',' + data.getValue();
     } catch (e) {
       cell = '【报错】';
     }
@@ -125,6 +149,12 @@ const lines = [
   '| --- | ' + BOARDS.map(() => '---').join(' | ') + ' |',
   ...rows,
   '',
+  '## 双线电子积木（时钟 + 数据，' + dualTypes.length + ' 块）',
+  '',
+  '| 积木类型 | ' + BOARDS.map((x) => x[1]).join(' | ') + ' |',
+  '| --- | ' + BOARDS.map(() => '---').join(' | ') + ' |',
+  ...dualRows,
+  '',
   '## 各板位号表规模',
   '',
   '| 板型 | 数字口 | ADC（模拟读） | PWM（模拟写 / 占空比 / 频率） | 外部中断 |',
@@ -150,4 +180,4 @@ const outPath = outIdx >= 0 && process.argv[outIdx + 1]
 
 fs.writeFileSync(outPath, lines.join('\n'), 'utf8');
 console.log('已生成 ' + outPath);
-console.log('  ' + types.length + ' 块积木 × ' + BOARDS.length + ' 块板');
+console.log('  ' + types.length + ' 块单脚积木 + ' + dualTypes.length + ' 块双线积木 × ' + BOARDS.length + ' 块板');
