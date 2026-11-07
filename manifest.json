@@ -1,13 +1,13 @@
 {
     "name":  "Blockly 可视化编程工作台 离线安装包",
     "version":  "1.5.0",
-    "capturedAt":  "2026-11-08 01:11:19",
+    "capturedAt":  "2026-11-08 01:23:17",
     "sourceDir":  "D:\\Program Files\\Blockly",
     "node":  "v22.22.2",
     "cli":  "arduino-cli  Version: 1.5.1 Commit: 01f3d4f2b Date: 2026-06-05T10:22:12Z",
     "payload":  {
                     "Files":  712,
-                    "Bytes":  19634068
+                    "Bytes":  19634193
                 },
     "cores":  {
                   "Files":  80900,
@@ -56,7 +56,7 @@
     "volumes":  {
                     "dir":  "volumes",
                     "Files":  85,
-                    "Bytes":  2018317953,
+                    "Bytes":  2018317994,
                     "note":  "24 MiB 一卷的 rar（-v24m -m3 -rr3，受 GitHub 网页上传 25 MiB 上限约束）；install.ps1 装之前会自动解开到 pkg 原地"
                 }
 }
