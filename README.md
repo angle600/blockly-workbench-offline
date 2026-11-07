@@ -1,75 +1,103 @@
-# Blockly 可视化编程工作台 · 离线安装包
+# Blockly 可视化编程工作台
 
-拖积木出 Arduino C++ 代码，一键编译烧录。支持 **Raspberry Pi Pico / Pico W / Pico 2 /
-Arduino Uno R3 / ESP32-S3**，插上就能用，**全程不需要联网**。
+**拖积木出 Arduino C++，一键编译烧录，全程不需要联网。**
 
-| 项 | 值 |
-| --- | --- |
-| 包版本 | 1.3.0 |
-| 包大小 | 1.88 GB（1,925 MiB · 85 个 24 MiB 分卷） |
-| 装完占用 | 约 8.3 GB（含三套板卡核心与工具链） |
-| 系统要求 | Windows 10 / 11 64 位，需要 9 GB 以上空闲磁盘 |
-| 联网 | 不需要。板卡核心、外置库、Node 运行时、离线依赖全在包里 |
+面向 Raspberry Pi Pico / Pico W / Pico 2、Arduino Uno R3 和 ESP32-S3 的离线积木编程环境。
+板卡核心、工具链、外置库、Node 运行时全部打包在仓库里，装机即用。
+
+<div align="center">
+  <img src="docs/screenshots/main.png" alt="工作台主界面：左侧积木工具箱，中间积木画布，右侧实时生成的 C++ 代码" width="900">
+  <br>
+  <sub>左边拖积木，右边实时出代码，顶栏选板型、选串口、直接烧录</sub>
+</div>
 
 ---
 
-## 一、安装方法
+## 这是什么
 
-### 1. 最简单：双击
+一个把 Blockly 积木和真实单片机工具链缝在一起的工作台。你拖出来的每一块积木都会立刻变成
+能烧进板子的 C++ —— 不是示意代码，是 arduino-cli 真正能编译通过、能跑在硬件上的代码。
+
+它解决的是「教单片机编程时，环境装不起来」这件事：正常装一套 ESP32 + RP2040 + AVR 的环境，
+要联网下载近 9 GB 的板卡核心和工具链，中间任何一步超时都会前功尽弃。这个包把这些全部预先装好，
+拷到一台没有网络的 Windows 机器上，双击就能开始上课。
+
+**核心特性**
+
+- **积木即代码** —— 右侧代码区实时生成 C++，每一块积木对应的实现都看得见
+- **真的能烧** —— 顶栏「编译并烧录」直接调本地 `arduino-cli`，不用另开 Arduino IDE
+- **引脚不会错** —— 35 块电子积木的引脚下拉跟着板型变，Uno 上不出现 `GP15`，S3 上不出现 `GP22`
+- **同一份积木，两种语言** —— 切到 Python 视图就是等价的 MicroPython，能直接刷进 Pico W / ESP32-S3
+- **完全离线** —— 装完拔网线也能用，编译、烧录、串口监视全部本地完成
+
+## 支持的硬件
+
+| 板型 | 芯片 | 数字口 | ADC | PWM | 外部中断 |
+| --- | --- | --- | --- | --- | --- |
+| Raspberry Pi Pico | RP2040 | 27 | A0~A2 | 27 | — |
+| Raspberry Pi Pico W | RP2040 + CYW43439 | 26 | A0~A2 | 26 | — |
+| Raspberry Pi Pico W · BLE | RP2040 + 蓝牙 | 26 | A0~A2 | 26 | — |
+| Raspberry Pi Pico 2 | RP2350 | 27 | A0~A2 | 27 | — |
+| Arduino Uno R3 | ATmega328P | 20 | A0~A5 | 3/5/6/9/10/11 | 2、3 |
+| ESP32-S3 | Xtensa LX7 | 33 | A0~A9（ADC1） | 33 | — |
+| ESP32-S3 · USB | Xtensa LX7 + 硬件 CDC | 33 | A0~A9（ADC1） | 33 | — |
+
+随包预装三套板卡核心：`arduino:avr 1.8.8`、`esp32 3.3.12`、`rp2040 6.3.1`（共 80,900 个文件），
+以及 Servo、ESP32Servo、SerialLCD、EspSoftwareSerial、ghostl、PubSubClient 六个外置库。
+
+完整位号表（35 块积木 × 5 种板型，每块给几项、默认落在哪个脚）见 **[积木清单.md](积木清单.md)**。
+
+> 引脚下拉是**按板型静态生成**的，所以工具会提前挡掉几类必然踩的坑：Uno 的 PWM 只给 6 个脚、
+> Uno 的外部中断只给 2/3、ESP32-S3 的 GP22~GP37（芯片上不存在或归 Flash/PSRAM）不出现。
+> 舵机和蜂鸣器抢定时器这类运行时问题挡不住，但编译日志会打中文提示。
+
+## 快速开始
+
+### 1. 拿到这个包
+
+```bash
+git clone --depth 1 https://github.com/angle600/blockly-workbench-offline.git
+```
+
+约 1.9 GB（85 个 24 MiB 分卷，专为适配 GitHub 网页上传上限切的）。
+只想看脚本、不需要板卡核心的话，用稀疏检出跳过 `volumes/`：
+
+```bash
+git clone --depth 1 --filter=blob:none --sparse https://github.com/angle600/blockly-workbench-offline.git
+cd blockly-workbench-offline
+git sparse-checkout set --no-cone '/*' '!/volumes'
+```
+
+### 2. 环境要求
+
+| 项 | 要求 |
+| --- | --- |
+| 系统 | Windows 10 / 11 64 位 |
+| 磁盘 | 安装后约占用 8.3 GB，建议留 9 GB 以上 |
+| 网络 | **不需要**。板卡核心、工具链、Node 运行时都在包里 |
+| 权限 | 装到 `D:\Program Files\Blockly` 这类普通目录，**不要**装进 `C:\Program Files` |
+
+### 3. 安装
 
 ```
 双击  pkg\一键安装.cmd
 ```
 
-脚本会自己判断装哪儿：
+脚本自己判断装哪儿：pkg 在已装好的工作台里就就地修复，被单独拷走就装到
+`D:\Program Files\Blockly`（没有 D 盘则用系统盘 `\Blockly`）。
 
-| 情况 | 行为 |
-| --- | --- |
-| pkg 里只有 `volumes\*.rar`（当前形态） | 先把分卷解压回 `pkg\`（**约 10 分钟**，见下方说明） |
-| pkg 就在一个已装好的工作台里 | 就地安装 / 修复，缺什么补什么，不重拷 8 GB 核心 |
-| pkg 被单独拷到别处 | 装到 `D:\Program Files\Blockly`（没有 D 盘则用系统盘 `\Blockly`） |
-
-**关于那 10 分钟**：包是按 24 MiB 一卷压过的，安装前要先解开成真实目录才能用。
-解压是一次性的 —— 已经解开的目录会跳过，重装不会再等。它占的是 pkg 自己的空间，
-装完想回收见「三、删除方法」第 2 节。
-
-> **pkg 必须放在可写位置**。解压是写回 pkg 原地，写保护的 U 盘 / 只读网络盘会失败。
-> 遇到这个情况，先把整个 pkg 拷到本地硬盘再装。
-
-### 2. 装到别的位置
+装到别处或调整行为：
 
 ```cmd
-:: 装到指定目录
-pkg\一键安装.cmd -Target "E:\Tools\Blockly"
-
-:: 跳过最后那步自检（更快，但少一道验证）
-pkg\一键安装.cmd -SkipVerify
-
-:: 不装 Arduino IDE（省 540 MB 和几分钟）
-pkg\一键安装.cmd -NoIde
+pkg\一键安装.cmd -Target "E:\Tools\Blockly"   :: 指定安装目录
+pkg\一键安装.cmd -NoIde                       :: 不装 Arduino IDE（省 540 MB）
+pkg\一键安装.cmd -SkipVerify                  :: 跳过最后的自检
 ```
 
-也可以直接调 PowerShell：
+> **第一次装要等约 10 分钟**，时间几乎全花在把 85 个分卷解回 8.1 GB 的 `arduino15` 上。
+> 解压是一次性的，已经解开的目录会跳过。pkg 必须放在可写位置（解压是写回 pkg 原地）。
 
-```powershell
-powershell -ExecutionPolicy Bypass -File "pkg\install.ps1" -Target "E:\Tools\Blockly"
-```
-
-### 3. 安装过程做了什么
-
-1. **解开分卷** —— 把 `volumes\*.rar` 还原成 `arduino15 / runtime / npm / payload / libraries / ide`
-2. **预检** —— 逐项确认 Node、arduino-cli、板卡核心、离线依赖、工作台源码都在
-3. **铺源码** —— `payload\app` 等铺到目标目录；同名文件内容相同就跳过，不同会先备份到 `.pkg-backup\`
-4. **部署运行时** —— `tools\node\node.exe`、`tools\arduino-cli\arduino-cli.exe`
-5. **部署核心** —— `arduino:avr 1.8.8` / `esp32 3.3.12` / `rp2040 6.3.1` 共 80900 个文件
-6. **部署外置库** —— Servo / ESP32Servo / SerialLCD / EspSoftwareSerial / ghostl / PubSubClient
-7. **写配置** —— `arduino15\arduino-cli.yaml`，数据目录指向工作台自己的 `arduino15`
-8. **装 IDE（可选）** —— 解压 Arduino IDE 2.3.10，并把它和本包的核心用目录联接打通
-9. **自检** —— 跑一遍 headless 测试（生成器 + 引脚表），应显示 `ALL PASS`
-
-### 4. 装完怎么确认
-
-安装结束会打印三行关键信息：
+装完会打印三行核心状态和自检结果，这样就是好的：
 
 ```
 [+] arduino:avr   1.8.8    1.8.8  Arduino AVR Boards
@@ -80,198 +108,160 @@ powershell -ExecutionPolicy Bypass -File "pkg\install.ps1" -Target "E:\Tools\Blo
 [+] 自检通过
 ```
 
-三行核心都在、自检通过，就说明装好了。
-
----
-
-## 二、使用方法
-
-### 1. 打开工作台
+### 4. 启动
 
 ```
-双击  桌面\Blockly 工作台\Start-Workbench.cmd
-或    直接双击安装目录里的 Start-Workbench.cmd
+双击  安装目录里的  Start-Workbench.cmd
 ```
 
-浏览器会自动打开 **http://127.0.0.1:8765/**。关掉那个黑窗口就是退出。
+浏览器自动打开 **http://127.0.0.1:8765/**。关掉那个黑窗口就是退出。
 
-### 2. 先选板型（很重要）
+> `Start-Workbench.cmd` 会先起一个本地构建服务，页面上的「编译并烧录」才能真正调到
+> `arduino-cli`。另一个 `Start-Blockly.cmd` 直接打开 `app\index.html`，只能看代码和下载
+> `.ino`，不能烧录 —— 日常请用前者。
 
-工具栏右上角有个板型下拉：**Pico / Pico W / Pico 2 / UNO / ESP32-S3 / ESP32-S3·USB**。
+## 使用方法
 
-**所有积木的引脚下拉都会跟着板型变**：Uno 上你只能选 `0~13` 和 `A0~A5`，
-Pico 上则是 `GP0~GP28`。换板型时，已有积木的引脚会自动映射到新板能用的脚上
-（映射了哪些会在状态栏告诉你）。
+### 第一步：先选板型
 
-所以：**先选板型，再拖积木**。反过来的话引脚会被改掉。
+顶栏右上角的下拉：**Pico / Pico W / Pico W · BLE / Pico 2 / Uno R3 / ESP32-S3 / ESP32-S3 · USB**。
 
-### 3. 一个最小例子：让 Pico 上的 LED 闪
+**必须先选板型再拖积木。** 所有积木的引脚下拉都跟着板型变；换板型时已有积木的引脚会自动
+映射到新板能用的脚上（映射了哪些会在状态栏说明）。反过来的话引脚会被改掉。
 
-1. 板型选 **Pico**
-2. 从「事件 Events」拖「当开始时」→ 从「引脚 Pin」拖「数字输出 引脚 15 高」
-3. 从「Timing 时间」拖「等待 500 毫秒」→ 再来一个「数字输出 15 低」→「等待 500 毫秒」
-4. 把这几块都塞进「一直重复」
-5. 右侧自动出代码，点 **编译并烧录**
-6. 插上 Pico（按住 BOOTSEL 再插，或直接插也可以）→ 选串口 → 烧
+### 第二步：拖积木
 
-**能调试的地方**：右侧代码区实时生成，看得到每一块拼出了什么。
+从左边分类里拖，右边代码区实时更新。工具箱按用途分组：
 
-### 4. 引脚相关的三个坑（工具已经帮你挡了大部分）
+| 分类 | 内容 |
+| --- | --- |
+| Logic / Loops / Events / Math / Text / Variables / Functions | Blockly 标准积木 |
+| PWM 脉宽 | 占空比、频率 |
+| Serial 串口 | 打印、读行、监视 |
+| USB 外设 | 键盘、鼠标模拟（仅 ESP32-S3 的 TinyUSB 模式；`S3 · USB` 走硬件 CDC，只剩串口） |
+| Timing 时间 | 延时、毫秒/微秒计时 |
+| Network 网络 | WiFi、HTTP、MQTT |
+| Bus 总线 | I2C、SPI |
+| Interrupt 中断 | 外部中断计数、时间戳 |
+| Thread 多线程 | 事件分发（注册/取消/投递）与硬件定时器 |
 
-| 坑 | 表现 | 工具怎么处理 |
-| --- | --- | --- |
-| Uno 只有 6 个 PWM 脚 | 4/7/13 上写 PWM 灯不亮 | PWM 下拉里只给 `3/5/6/9/10/11` |
-| 舵机抢 Timer1、蜂鸣器抢 Timer2 | 用了舵机，9/10 的 PWM 悄悄失效 | 编译日志打中文 `#pragma message` 提示 |
-| ESP32-S3 的 GP22~37 不可用 | 接上去没反应，或板子起不来 | 下拉里直接不出现 |
+不确定某块积木干什么？**右键 →「查看帮助」**，或选中后按 **F1**，会告诉你它生成什么 C++。
+找不到积木就按 **`/`** 搜（中文名、类型、关键词都能搜）。
 
-完整位号表（35 块积木 × 5 块板）见 **`pkg\积木清单.md`**。
+### 第三步：编译并烧录
 
-### 5. 里面都有什么
+1. 用 USB 线把板子插上
+2. 顶栏「串口」下拉里选出现的那个口（Pico 插上一般就会出；Uno 要先装好板上的 USB 转串口芯片驱动，CH340 或 ATmega16U2）
+3. 点 **「编译并烧录」**
 
-- **35 块带位号下拉的电子积木** + 串口 / 时间 / 数学 / 文本 / 事件 / 函数 / 网络 / BLE / USB 键盘鼠标等
-- **示例工程**：`examples\`（Uno 点灯、Pico IO、ESP32 联网等）
-- **示例积木文件**：`samples\`（拖进界面就能打开）
-- **MicroPython 视图**：同一份积木可以生成 Python 并烧进板子
-- **帮助**：每块积木右键有说明；README 里有逐板型的引脚对照
+不确定接的是什么板子？点「探测」读芯片签名 —— Uno / Nano / Pro Mini 都是 ATmega328P，分不出型号，
+但能确认「这是个能烧的 AVR」。
 
-### 6. 改了代码想更新界面
+### 一个最小例子：让 Pico 上的板载 LED 闪
 
-改完 `app\` 下的源码，需要重新打包前端：
+板型选 **Pico** → 拖「数字输出 LED 高」→「等待 500 毫秒」→「数字输出 LED 低」→「等待 500 毫秒」
+→ 全塞进「一直重复」→ 点「编译并烧录」。
 
-```cmd
-cd /d "D:\Program Files\Blockly\app"
-..\tools\node\node.exe build.mjs
-```
+这就是内置示例里的「板载 LED 闪烁」，界面里「示例」→ 选它 →「载入工作区」可以一键载入。
 
-然后浏览器 **Ctrl+F5** 强刷。
+## 内置示例库
 
-> 如果改的是 **pkg 里那份源码**、想让安装包也跟着更新：双击 `pkg\更新安装包.cmd`。
-> 它只重打 `payload.rar`（约 5 MB / 40 秒），**不会**碰那 8 GB 板卡核心。
+<div align="center">
+  <img src="docs/screenshots/examples.png" alt="示例库面板：左边是积木示例和代码示例列表，右边是选中示例的说明、支持板型和生成的代码" width="900">
+</div>
 
----
+点顶栏「示例」。两类：
 
-## 三、删除方法
+- **积木示例** —— 直接载入工作区，改一改就能烧
+- **代码示例** —— 纯 `.ino`，可以直接编译烧录，也能当参考
 
-### 1. 一键卸载（推荐）
+每个示例都有中文标题、说明、难度和适用板型标签，支持搜索。
+
+## MicroPython 视图
+
+<div align="center">
+  <img src="docs/screenshots/micropython.png" alt="同一份积木切换到 Python 视图，右侧显示等价的 MicroPython 代码" width="900">
+</div>
+
+代码区右上角切 **C++ / Python**。同一份积木，Python 视图给的是等价的 MicroPython，
+用 `machine.Pin` / `time.sleep_ms` 那套写出来。
+
+对能跑 MicroPython 的板子（Pico W / ESP32-S3），还能点「刷 MicroPython」——先给板子刷固件
+（会抹掉现有的 C++ 程序），再把这段 Python 传上去直接运行。
+
+## 导出与保存
+
+| 顶栏入口 | 产物 |
+| --- | --- |
+| 保存设计（`Ctrl+S`） | 积木设计存进 `designs\`，可再打开 |
+| 历史（`Ctrl+Shift+H`） | 当前设计的历次版本，可预览 / 还原 |
+| 下载 `.ino` | 单个 Arduino 源文件 |
+| 导出 Arduino（`Ctrl+Shift+E`） | `exports\<名字>\` 下完整工程：`.ino` + 积木文件 + README，双击就能用 Arduino IDE 打开 |
+| 导出模块 | `.h` + `.cpp`，别的工程 `#include` 后调 `xxx_setup()` / `xxx_loop()` |
+| 导出 PNG（`Ctrl+E`） | 把画布上的积木导出成 2 倍分辨率图片，按当前主题配色 |
+
+`designs\` 和 `exports\` 是**用户数据目录**，卸载脚本默认不删。
+
+## 卸载
 
 ```
 双击  pkg\一键删除.cmd
 ```
 
-它会：
-
-1. 找出工作台装在哪（读安装记录，没有就扫默认位置）
-2. **列出要删的每一项和体积**，让你看清楚
-3. 要你**亲手输入 `YES`** 才动手（输别的就取消）
-4. 删完之后问一句：pkg 里解压出来的 8.5 GB 要不要一起回收
-
-**想先看看会删什么、不真删**：
+会先列出要删的每一项和体积，要你亲手输入 `YES` 才动手，删完再问要不要回收 pkg 里那 8.5 GB 解压产物。
 
 ```cmd
-pkg\一键删除.cmd -DryRun
-```
-
-**装在了自定义位置**：
-
-```cmd
+pkg\一键删除.cmd -DryRun          :: 只列清单，不真删
+pkg\一键删除.cmd -CleanPkgOnly    :: 只回收 pkg 里的解压产物，工作台继续用
 pkg\一键删除.cmd -Target "E:\Tools\Blockly"
 ```
 
-### 2. 只回收空间，不卸载
+被脚本特意保护的是：`pkg\` 本体、`designs\`、`exports\`、`samples\`、`.workbuddy\`。
 
-装完之后 pkg 里会多出解压出来的 8.5 GB（`arduino15 / runtime / npm / payload / libraries / ide`）。
-只想把这部分清掉、工作台继续用：
-
-```cmd
-pkg\一键删除.cmd -CleanPkgOnly
-```
-
-删完 pkg 回到 1.88 GB（只剩分卷和脚本），下次安装会重新解压（再等 10 分钟）。
-也可以手动删那几个目录，效果一样。
-
-### 3. 不想跑脚本，手动删
-
-> 先把 `designs\`（积木设计）和 `exports\`（导出的 .ino）拷出来，否则会一起删掉。
-
-1. 删掉安装目录（默认 `D:\Program Files\Blockly`）
-2. 删掉桌面和开始菜单里的 `Arduino IDE 2.3.10.lnk`（如果你装过 IDE）
-3. 如果装过 IDE，还要删 `%LOCALAPPDATA%\Arduino15\packages` 下指向工作台的三个联接
-   （`arduino` / `esp32` / `rp2040`，都是目录联接，删链接不会动目标内容）
-
-> 安装时会在安装目录写一个 `.blockly-install.json`，记着「装在哪、什么时候装的、从哪个 pkg 装的」。
-> 一键删除就是靠它找到位置的；手动删时一起删掉即可。
-
-### 4. 卸载会删什么、不会删什么
-
-| 会删 | 不会删（脚本特意保护） |
-| --- | --- |
-| 安装目录里的 `app` `tools` `arduino15` `arduino-user` `examples` `static` `modules` `build` `firmware` `sch` | **`pkg\`** —— 安装包本体（除非加 `-IncludePkg`） |
-| `.pkg-backup`（安装时覆盖前的旧文件备份） | **`designs\`** —— 你自己存的积木设计 |
-| 桌面 / 开始菜单的 IDE 快捷方式 | **`exports\`** —— 你导出的 `.ino` 工程 |
-| `%LOCALAPPDATA%\Arduino15\packages` 下的联接（手动步骤） | **`samples\`** —— 你自己加的示例 |
-| | **`.workbuddy\`** —— 开发过程记录 |
-| | `volumes\*.rar`（分卷）+ 包内脚本 |
-
-被保护的那几项，脚本会逐条标成 `[保留·用户数据]` 或 `[保留·pkg（安装包本体）]` 列出来，
-删完还会再提示一遍「这些没删，确实不要了可以自己手动删」。
-
-> ⚠️ **pkg 就在安装目录里时**（现在的形态：`D:\Program Files\Blockly\pkg`），
-> 卸载默认**保留 pkg**，只清掉工作台其余内容。真要连 pkg 一起删：
-> `pkg\一键删除.cmd -IncludePkg` —— 删了就没有安装包了，下次得重新要一份。
-
----
-
-## 四、常见问题
+## 常见问题
 
 **装完打开是空白页 / 一直转圈**
-看那个黑窗口有没有报错。多半是端口被占用，关掉重复启动的窗口，或改端口：
-`set PORT=8766` 再启动。
+看那个黑窗口有没有报错。多半是端口被占用，关掉重复启动的窗口，或 `set PORT=8766` 再启动。
 
 **编译报 `Platform 'arduino:avr' not found`**
 板卡核心没找到。检查 `<安装目录>\arduino15\packages\` 下有没有 `arduino`、`esp32`、`rp2040`。
-如果是你把 pkg 压成 volumes 之后核心不见了，重跑一次 `一键安装.cmd` 让它解压回来。
+如果是把 pkg 压成 volumes 之后核心不见了，重跑一次 `一键安装.cmd` 让它解压回来。
 
-**编译报 `Access is denied`（写不进去）**
-装到了 `C:\Program Files` 这类需要管理员的地方。要么右键「以管理员身份运行」，
-要么换到普通目录装（推荐 `D:\Program Files\Blockly`）。
-
-**卸载提示「删不掉」**
-工作台窗口还开着、Arduino IDE 还开着、或者杀软在扫。全部关掉再双击一次。
-
-**装 IDE 报 `Access to 'D:\Arduino IDE 2.3.10\Arduino IDE.exe' is denied`**
-那个目录已存在且文件被占用（IDE 正在运行）。跳过 IDE 完全不影响工作台使用，
-也可以关掉 IDE 后重装。
+**编译报 `Access is denied`**
+装到了需要管理员权限的目录。换到普通目录装，或右键「以管理员身份运行」。
 
 **安装很慢 / 卡在「解开 arduino15」**
-8.1 GB 解压约 10 分钟，属正常。机械硬盘会更久。
+8.1 GB 解压约 10 分钟，属正常。机械硬盘更久。
 
----
+**Pico 插上但串口列表里没有**
+按住 BOOTSEL 再插，或者换一根**能传数据**的 USB 线（很多线只供电）。
 
-## 五、目录结构
+更多安装细节、目录说明、回滚方法、Arduino IDE 目录联接的踩坑记录，见 **[安装说明.md](安装说明.md)**。
+
+## 仓库结构
 
 ```
-pkg\
+.
 ├─ 一键安装.cmd          ← 双击安装
 ├─ 一键删除.cmd          ← 双击卸载 / 清理
-├─ 更新安装包.cmd        ← 改了源码后，把改动收进安装包
-├─ README.md             ← 本文件
-├─ 安装说明.md           ← 更细的安装/目录说明（含踩坑记录）
-├─ 积木清单.md           ← 35 块积木 × 5 块板的位号表
-├─ install.ps1           安装主逻辑（含分卷还原）
+├─ 更新安装包.cmd        ← 改了源码后把改动收进安装包
+├─ install.ps1           安装主逻辑（含分卷还原、预检、自检）
 ├─ uninstall.ps1         卸载主逻辑
 ├─ manifest.json         版本 / 时间 / 各部分体积
+├─ 安装说明.md           详细安装文档（含踩坑记录）
+├─ 积木清单.md           35 块积木 × 5 种板型的位号表
+├─ 校验清单.md           分卷完整性校验基准
 ├─ volumes\              85 个 24 MiB 分卷（安装时自动解开）
 ├─ config\               arduino-cli 配置模板
-└─ 工具\
-    ├─ UnRAR.exe         解压分卷（目标机不用装 WinRAR）
-    ├─ pack-volumes.ps1  重新打包分卷
-    ├─ verify-volumes.ps1 删源前校验分卷完整性
-    ├─ dump-block-list.cjs 重新生成「积木清单.md」
-    └─ 导入旧Arduino15 系列  把旧账户的 Arduino 环境并进来
+├─ docs\screenshots\     README 用的界面截图
+└─ 工具\                 分卷打包/校验、积木清单生成、UnRAR.exe
 ```
 
----
+> `volumes\` 里的分卷，安装时会原地解成 `arduino15 / runtime / npm / payload / libraries / ide`。
+> 解完之后 `pkg` 会涨到约 10 GB，装完想回收可以用 `一键删除.cmd -CleanPkgOnly` 回到 1.9 GB。
 
-**许可**：本包内的 Arduino 板卡核心、工具链、外置库分别遵循其原项目许可
-（arduino:avr / esp32 / rp2040 为 LGPL 或 Apache-2.0，各库见其 `library.properties`）。
-UnRAR.exe 可自由分发，但不得用于重建 RAR 压缩算法。
+## 许可
+
+本包内的 Arduino 板卡核心、工具链、外置库分别遵循其原项目许可
+（`arduino:avr` / `esp32` / `rp2040` 为 LGPL 或 Apache-2.0，各库见其 `library.properties`）。
+`UnRAR.exe` 可自由分发，但不得用于重建 RAR 压缩算法。
